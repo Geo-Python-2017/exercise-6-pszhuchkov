@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Apr  9 19:13:30 2018
+The script uses climate data from the Helsinki-Vantaa airport station.
+The data contains daily observations obtained from the NOAA Global Historical Climatology Network. 
+The scripts outputs the number of non-NaN values for average and minimum temperature, 
+the total number of observation days, the first and last observations, average temperature
+for whole file and maximum temperatures for summer of 1969. 
 
 @author: Pavel
 """
