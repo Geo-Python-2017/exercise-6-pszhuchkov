@@ -49,18 +49,18 @@ selection_summer_tmax = selection_summer['TMAX']
 print(selection_summer_tmax)
 
 # Create year-day column
-data['YD'] = (data['DATE'].astype(str)).str.slice(start=0,stop=6)
+data['YM'] = (data['DATE'].astype(str)).str.slice(start=0,stop=6)
 
 # Create empty Dataframe
 monthlyData = pd.DataFrame()
 
 # Group Dataframe
-grouped_month = data.groupby('YD')
+grouped_month = data.groupby('YM')
 
 # Aggregate data
 for key, group in grouped_month:
     mean_value = group[['TAVG']].mean()
-    mean_value['YD'] = key
+    mean_value['YM'] = key
     mean_value['TempsC'] = fahrenheitToCelsius(mean_value['TAVG']) 
     monthlyData = monthlyData.append(mean_value, ignore_index=True)
 
