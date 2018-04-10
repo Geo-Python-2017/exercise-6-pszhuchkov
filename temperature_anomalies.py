@@ -5,7 +5,9 @@ The data contains daily observations obtained from the NOAA Global Historical Cl
 The scripts outputs the number of non-NaN values for average and minimum temperature, 
 the total number of observation days, the first and last observations, average temperature
 for whole file and maximum temperatures for summer of 1969. 
-The script calculates monthly average temperatures.
+The script calculates monthly average temperatures and compares them with monthly
+average temperatures for period 1952-1980.
+
 
 @author: Pavel
 """
@@ -48,8 +50,12 @@ selection_summer = data.ix[(data['DATE']>=19690501) & (data['DATE']<19690901)]
 selection_summer_tmax = selection_summer['TMAX']
 print(selection_summer_tmax)
 
-# Create year-day column
+# Create year-month, month columns
 data['YM'] = (data['DATE'].astype(str)).str.slice(start=0,stop=6)
+data['monthNumber'] = (data['DATE'].astype(str)).str.slice(start=4,stop=6)
+
+# Convert temperatures to Celsius
+data['TAVG_Celsius'] = fahrenheitToCelsius(data['TAVG'])
 
 # Create empty Dataframe
 monthlyData = pd.DataFrame()
@@ -59,14 +65,77 @@ grouped_month = data.groupby('YM')
 
 # Aggregate data
 for key, group in grouped_month:
-    mean_value = group[['TAVG']].mean()
+    mean_value = group[['TAVG_Celsius']].mean()
     mean_value['YM'] = key
-    mean_value['TempsC'] = fahrenheitToCelsius(mean_value['TAVG']) 
+    mean_value['monthNumber'] = key[4:6]
     monthlyData = monthlyData.append(mean_value, ignore_index=True)
-
-# Print obtained Datframe
-print(monthlyData)
     
+# Reorder columns
+monthlyData = monthlyData[['YM','monthNumber','TAVG_Celsius']]
+    
+   
+"""
+# Create datetype column
+data['DATE_datetime'] = pd.to_datetime(data['DATE'], format='%Y%m%d')
+
+# Create datatime index
+timeindex = pd.DatetimeIndex(data['DATE_datetime'])
+
+# Create copy Dataframe with certain columns
+monthlyData = pd.Series(list(data['TAVG']),index=timeindex)
+
+# Resample by month
+ts = monthlyData.resample('1M',).mean()
+
+print(ts)
+"""
+
+# Create monthes dictionary
+monthes_dictionary = pd.DataFrame({'monthNumber':['01','02','03','04','05','06','07','08','09','10','11','12'],'month':['January','February','March','April','May','June','July','August','September','October','November','December']})
+
+# Choose period
+period = data.ix[(data['DATE']>=19520101) & (data['DATE']<19810101)]
+
+# Reset index for period
+period = period.reset_index(drop=True)
+
+# Create empty Dataframe
+referenceTemps = pd.DataFrame()
+
+# Group by month
+grouped_period = period.groupby('monthNumber')
+
+# Iterate groups
+for key, group in grouped_period:
+    row = group[['TAVG_Celsius']].mean()
+    row['monthNumber'] = key
+    referenceTemps = referenceTemps.append(row,ignore_index=True)
+    
+# Rename columns
+referenceTemps = referenceTemps.rename(columns={'TAVG_Celsius':'avgTempsC'})
+    
+# Merge with dictionary
+referenceTemps = referenceTemps.merge(monthes_dictionary,on='monthNumber')
+
+# Join monthlyData and referenceTemps
+monthlyData = monthlyData.merge(referenceTemps,how='left', on='monthNumber',sort=False)
+
+# Compare temperatures
+monthlyData['Diff'] = monthlyData['TAVG_Celsius'] - monthlyData['avgTempsC'] 
+
+
+    
+    
+    
+    
+
+
+
+
+
+
+
+
 
 
 
